@@ -1,1 +1,3 @@
 images/
+infra/aws-iot/
+.env
