@@ -19,11 +19,15 @@ def initialize_average(frame):
     return avg, gray
 
 def detect_movement(avg, gray, detect_criteria):
-    cv2.accumulateWeighted(gray, avg, 0.7)
-    frame_delta = cv2.absdiff(gray, cv2.convertScaleAbs(avg))
+    # ブラーを掛けてノイズを軽減する
+    blur = cv2.GaussianBlur(gray, (1, 1), 1)
+    cv2.accumulateWeighted(blur, avg, 0.7)
+    frame_delta = cv2.absdiff(blur, cv2.convertScaleAbs(avg))
     thresh = cv2.threshold(frame_delta, 3, 255, cv2.THRESH_BINARY)[1]
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+    print("a" , contours)
     for contour in contours:
+        len(contour)
         if cv2.contourArea(contour) < detect_criteria:
             continue
         logging.debug("Movement detected")

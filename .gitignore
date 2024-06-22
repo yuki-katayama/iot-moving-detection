@@ -1,3 +1,5 @@
 images/
 infra/aws-iot/
 .env
+tmp/
+__pycache__/

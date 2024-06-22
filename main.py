@@ -1,8 +1,8 @@
 from config import *
-from camera_utils import capture_frame, initialize_average, detect_movement
-from mqtt_utils import connect_to_aws_iot, publish_image
-from line_notify_utils import line_notify
-from keyboard_utils import listen_to_keyboard
+from utils.camera_utils import capture_frame, initialize_average, detect_movement
+from utils.mqtt_utils import connect_to_aws_iot, publish_image
+from utils.line_notify_utils import line_notify
+from utils.keyboard_utils import listen_to_keyboard
 import cv2
 import threading
 import logging
@@ -50,10 +50,10 @@ def main():
             if shot:
                 shot = False
                 logging.debug("手動撮影がトリガーされました。")
-                line_notify(LINE_TOKEN, frame)
+                # line_notify(LINE_TOKEN, frame)
                 publish_image(mqtt_connection, TOPIC_NAME, frame)
             cv2.imshow('Camera', frame)
-            cv2.waitKey(500)
+            cv2.waitKey(1)
     finally:
         destroy(cap, mqtt_connection)
         keyboard_thread.join()  # キーボードスレッドの終了を待つ
