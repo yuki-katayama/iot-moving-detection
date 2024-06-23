@@ -50,7 +50,6 @@ def main():
             if shot:
                 shot = False
                 logging.debug("手動撮影がトリガーされました。")
-                # line_notify(LINE_TOKEN, frame)
                 publish_image(mqtt_connection, TOPIC_NAME, frame)
             cv2.imshow('Camera', frame)
             cv2.waitKey(1)
