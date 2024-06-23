@@ -52,18 +52,28 @@ export class IotStepFunctionStack extends cdk.Stack {
     existingBucket.grantRead(getS3ObjectFunction);
 
     // Step Functionsの定義
+    // Step Functionsのタスク定義
     const getS3ObjectTask = new tasks.LambdaInvoke(this, IOT_GET_S3_TASK, {
       lambdaFunction: getS3ObjectFunction,
       outputPath: '$.Payload',
+    }).addCatch(new sfn.Fail(this, 'GetS3ObjectFail', {
+      cause: 'S3 Get Object Failed',
+      error: 'GetS3ObjectError',
+    }), {
+      resultPath: '$.errorInfo'
     });
 
     const notifyLINETask = new tasks.LambdaInvoke(this, IOT_NOTIFY_LINE_TASK, {
       lambdaFunction: notifyLINEFunction,
       outputPath: '$.Payload',
+    }).addCatch(new sfn.Fail(this, 'NotifyLINEFail', {
+      cause: 'LINE Notification Failed',
+      error: 'NotifyLINEError',
+    }), {
+      resultPath: '$.errorInfo'
     });
 
-    const definition = getS3ObjectTask
-      .next(notifyLINETask);
+    const definition = getS3ObjectTask.next(notifyLINETask);
 
     const stateMachine = new sfn.StateMachine(this, IOT_MACHINE, {
       definition,

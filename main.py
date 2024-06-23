@@ -48,7 +48,6 @@ def main():
                 continue
             if detect_movement(avg, gray, DETECT_CRITERIA):
                 logging.debug("動体を検出しました！")
-                line_notify(LINE_TOKEN, frame)
                 publish_image(mqtt_connection, TOPIC_NAME, frame)
             if shot:
                 shot = False
