@@ -40,8 +40,11 @@ def main():
     try:
         while keep_running:
             frame = capture_frame(cap)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.GaussianBlur(gray, (21, 21), 0)  # Apply GaussianBlur to reduce noise
+
             if avg is None:
-                avg, gray = initialize_average(frame)
+                avg, _ = initialize_average(frame)
                 continue
             if detect_movement(avg, gray, DETECT_CRITERIA):
                 logging.debug("動体を検出しました！")
