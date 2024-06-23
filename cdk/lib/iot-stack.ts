@@ -1,11 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iot from 'aws-cdk-lib/aws-iot';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 import * as path from 'path';
-import * as event_sources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { Construct } from 'constructs';
 import * as dotenv from 'dotenv'
 
@@ -21,36 +18,17 @@ const IOT_DEVICE = PREFIX + "-iot-device"
 const IOT_THING_ATTACHMENT = PREFIX + "-iot-thing-attachment"
 const IOT_POLICY_ATTACHMENT = PREFIX + "-iot-policy-attachment"
 const IOT_POLICY = PREFIX + "-iot-policy";
-const IOT_LAMBDA_PERMISSION = PREFIX + "-iot-permission";
 const TOPIC_DIR = "detection"
 
 export class IotStack extends cdk.Stack {
+  iotBucket: cdk.aws_s3.Bucket;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    //     I want to save images to S3 via iot-core.
-    // Next, I want to call lambda in the apis directory from an S3 event. There is a requirement.txt, so I want it to be usable on the lambda side. 
-    // S3バケットを作成します
 
-    const imageBucket = new s3.Bucket(this,
+    this.iotBucket = new s3.Bucket(this,
       BUCKET_NAME, {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-    });
-
-    // 3. Create a Lambda function in the "apis" directory
-    const lambdaFunction = new lambda.Function(this, 'lambdaFunction', {
-      runtime: lambda.Runtime.PYTHON_3_9,
-      handler: 'iot.lambda_handler',
-      code: lambda.Code.fromAsset(path.join('apis')),
-      environment: {
-        PYTHONPATH: '/var/task/apis:/var/task/apis/package',
-        LINE_TOKEN: process.env.LINE_TOKEN!
-      },
-      events: [
-        new event_sources.S3EventSource(imageBucket, {
-          events: [s3.EventType.OBJECT_CREATED],
-          filters: [{ prefix: TOPIC_DIR }]
-        })
-      ],
     });
     
 
@@ -70,24 +48,13 @@ export class IotStack extends cdk.Stack {
         actions: [
           {
             s3: {
-              bucketName: imageBucket.bucketName,
+              bucketName: this.iotBucket.bucketName,
               key: '${topic()}/${timestamp()}',
               roleArn: iotRole.roleArn,
             },
           },
         ],
       },
-    });
-
-    // S3バケットへの読み書き権限をLambda関数に付与します
-    imageBucket.grantReadWrite(lambdaFunction);
-
-    // Lambda関数に対するInvoke権限を設定します
-    new lambda.CfnPermission(this, IOT_LAMBDA_PERMISSION, {
-      functionName: lambdaFunction.functionName,
-      action: 'lambda:InvokeFunction',
-      principal: 'iot.amazonaws.com',
-      sourceArn: iotRule.attrArn
     });
 
     // IoTデバイス（Thing）を作成します
